@@ -3,10 +3,6 @@ description: A question, answer or explanation looks wrong or out of date.
 title: "[error] q?: "
 labels: ["correction"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for taking the time. A link to the public doc that backs you up makes the fix quick.
   - type: input
     id: question
     attributes:
