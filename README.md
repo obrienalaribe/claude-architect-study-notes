@@ -2,7 +2,7 @@
 
 My practice questions and study notes for the Claude Certified Architect, Foundations exam (CCAR-F).
 
-I'm O'Brien (OB): AI and GTM engineer, consultant and trainer, with 10+ years in DevOps and SRE. [LinkedIn](https://www.linkedin.com/in/obrienalaribe/)
+I'm OBrien (OB): AI and GTM engineer, consultant and trainer, with 10+ years in DevOps and SRE. [LinkedIn](https://www.linkedin.com/in/obrienalaribe/)
 
 ## Why
 
@@ -29,6 +29,6 @@ It asks for an email, then gives you a score for each exam domain so you can see
 
 ## Licence
 
-Questions and notes: [CC BY 4.0](LICENSE-CONTENT), credit "O'Brien Alaribe" with a link back. Code: [MIT](LICENSE).
+Questions and notes: [CC BY 4.0](LICENSE-CONTENT), credit "OBrien Alaribe" with a link back. Code: [MIT](LICENSE).
 
 <sub>Claude and Anthropic are trademarks of Anthropic.</sub>
