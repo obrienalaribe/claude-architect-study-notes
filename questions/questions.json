@@ -13,7 +13,7 @@
       "Instruct the model in the system prompt never to write text alongside a tool request."
     ],
     "correct": 2,
-    "explanation": "The stop reason is the structural signal for the loop: continue on \"tool_use\", return the tool results, and finish on \"end_turn\". Text in a response says nothing reliable about whether the work is done. Today: the API has more stop reasons (pause_turn, refusal, max_tokens and others), but the rule is the same: continue on tool_use and never invent an exit.",
+    "explanation": "The stop reason is the structural signal for the loop: continue on \"tool_use\", return the tool results, and finish on \"end_turn\". Text in a response says nothing reliable about whether the work is done. The API has other stop reasons too (pause_turn, refusal, max_tokens and others), and the rule is the same: continue on tool_use and never invent an exit.",
     "whyNot": [
       "An arbitrary iteration cap as the primary stopping mechanism is a named anti-pattern; it can end a run before the work is done.",
       "Parsing natural language for a completion phrase is fragile; the model may word it differently or say it early.",
@@ -35,7 +35,7 @@
       "Give the drafting subagent a longer system prompt describing how a strong, well-cited clinical safety section reads."
     ],
     "correct": 0,
-    "explanation": "A subagent starts with only what its prompt contains; it does not inherit the coordinator's conversation. \"The findings above\" points at context the subagent never received, so the findings have to be passed in explicitly. Today: the Task tool is named Agent, and Task still works as an alias.",
+    "explanation": "A subagent starts with only what its prompt contains; it does not inherit the coordinator's conversation. \"The findings above\" points at context the subagent never received, so the findings have to be passed in explicitly. The Task tool was later renamed Agent; both names mean the same tool.",
     "whyNot": [
       null,
       "The Task tool is what lets a coordinator spawn subagents. It does not share conversation history.",
@@ -145,7 +145,7 @@
       "Set `tool_choice` to \"any\" so the model must always call an extraction tool."
     ],
     "correct": 0,
-    "explanation": "A required field forces a value even when the source has none, which pushes the model to make one up. Marking it nullable gives the model an honest way to say the information is absent. Today: native structured outputs (output_config.format, strict: true) guarantee the schema, but checking the meaning is still your job.",
+    "explanation": "A required field forces a value even when the source has none, which pushes the model to make one up. Marking it nullable gives the model an honest way to say the information is absent. Native structured outputs (output_config.format, strict: true) guarantee the schema, but checking the meaning is still your job.",
     "whyNot": [
       null,
       "The schema still demands an integer, so the instruction and the schema pull in opposite directions.",

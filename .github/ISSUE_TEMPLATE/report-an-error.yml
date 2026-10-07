@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks. Please do not paste questions from a real exam or a practice test behind a login.
+        Thanks for taking the time. A link to the public doc that backs you up makes the fix quick.
   - type: input
     id: question
     attributes:
