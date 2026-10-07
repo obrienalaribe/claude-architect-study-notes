@@ -1,0 +1,222 @@
+[
+  {
+    "id": "q1",
+    "domain": "D1",
+    "domainName": "Agentic Architecture and Orchestration",
+    "task": "1.1",
+    "scenario": "A freight forwarder runs a rebooking agent on the Claude API. Its loop stops as soon as a response contains any assistant text. In about 1 of every 7 runs the agent writes \"Checking carrier schedules now\" in the same response as a tool request, and the run ends before the tool executes.",
+    "question": "Which loop control fixes this most reliably?",
+    "options": [
+      "Cap the loop at 12 iterations and treat reaching the cap as completion.",
+      "End the loop when the reply contains a completion phrase such as \"rebooking complete\".",
+      "Keep looping while `stop_reason` is \"tool_use\", run the requested tools, and stop on \"end_turn\".",
+      "Instruct the model in the system prompt never to write text alongside a tool request."
+    ],
+    "correct": 2,
+    "explanation": "The stop reason is the structural signal for the loop: continue on \"tool_use\", return the tool results, and finish on \"end_turn\". Text in a response says nothing reliable about whether the work is done. Today: the API has more stop reasons (pause_turn, refusal, max_tokens and others), but the rule is the same: continue on tool_use and never invent an exit.",
+    "whyNot": [
+      "An arbitrary iteration cap as the primary stopping mechanism is a named anti-pattern; it can end a run before the work is done.",
+      "Parsing natural language for a completion phrase is fragile; the model may word it differently or say it early.",
+      null,
+      "The loop would still key off text, which is the wrong signal, and a prompt rule will not hold every time."
+    ]
+  },
+  {
+    "id": "q2",
+    "domain": "D1",
+    "domainName": "Agentic Architecture and Orchestration",
+    "task": "1.3",
+    "scenario": "A medical publisher's coordinator agent spends 14 turns gathering summaries of 23 clinical papers. It then spawns a drafting subagent with the prompt \"Write the safety section from the findings above\". The draft comes back generic and cites none of the papers.",
+    "question": "What is the most likely fix?",
+    "options": [
+      "Put the complete paper summaries, with their source details, directly into the drafting subagent's prompt.",
+      "Add \"Task\" to the drafting subagent's allowed tools so it can read the coordinator's history.",
+      "Tell the drafting subagent to consult the coordinator's conversation before it starts writing.",
+      "Give the drafting subagent a longer system prompt describing how a strong, well-cited clinical safety section reads."
+    ],
+    "correct": 0,
+    "explanation": "A subagent starts with only what its prompt contains; it does not inherit the coordinator's conversation. \"The findings above\" points at context the subagent never received, so the findings have to be passed in explicitly. Today: the Task tool is named Agent, and Task still works as an alias.",
+    "whyNot": [
+      null,
+      "The Task tool is what lets a coordinator spawn subagents. It does not share conversation history.",
+      "The subagent cannot see that conversation, so there is nothing for it to consult.",
+      "Style guidance does not supply the missing findings."
+    ]
+  },
+  {
+    "id": "q3",
+    "domain": "D2",
+    "domainName": "Tool Design and MCP Integration",
+    "task": "2.2",
+    "scenario": "A property manager exposes an MCP tool, `find_lease_records`, to a tenant help agent. The tool returns an empty list when no lease matches and also when the records database times out. Last month 41 tenants were wrongly told they had no lease on file.",
+    "question": "Which change to the tool best lets the agent respond correctly?",
+    "options": [
+      "Return the text \"Operation failed\" for both cases so the agent stops telling tenants anything definite.",
+      "Raise the tool's database timeout from 5 to 60 seconds and keep returning an empty list when a lookup still fails after the longer wait.",
+      "Add a system prompt rule telling the agent to call the tool again whenever a result comes back empty.",
+      "On a timeout, set `isError` and return a transient category with a retryable flag; keep the empty list for true no-match results."
+    ],
+    "correct": 3,
+    "explanation": "An access failure and a successful query with no matches need different handling, so the tool has to report them differently. Structured error metadata tells the agent the failure is transient and worth retrying, while a real empty result can be stated with confidence.",
+    "whyNot": [
+      "One generic message for every case removes the information the agent needs to choose a recovery step.",
+      "A longer wait still reports a failure as an empty success, which is the original bug.",
+      "The agent still cannot tell the two cases apart, and it wastes calls on every valid empty result.",
+      null
+    ]
+  },
+  {
+    "id": "q4",
+    "domain": "D2",
+    "domainName": "Tool Design and MCP Integration",
+    "task": "2.4",
+    "scenario": "A nine-person analytics team wants every engineer's Claude Code to reach the same data warehouse schema server. One engineer has it working from her personal configuration with an access token pasted in. New joiners keep asking how to set it up.",
+    "question": "What is the best way to roll this out?",
+    "options": [
+      "Have each engineer copy her entry into their own `~/.claude.json`, token included.",
+      "Commit a project `.mcp.json` that defines the server and reads the token from an environment variable such as `${WAREHOUSE_TOKEN}`.",
+      "Commit a project `.mcp.json` with the token written inline so the server works straight after cloning.",
+      "Describe the server, its launch command and its setup steps in the project CLAUDE.md so that Claude connects to it at the start of each session."
+    ],
+    "correct": 1,
+    "explanation": "Shared team tooling belongs in the project-scoped `.mcp.json`, and environment variable expansion keeps the credential out of version control. Everyone gets the server on clone and supplies their own token locally.",
+    "whyNot": [
+      "User-level configuration is for personal or experimental servers; it is not shared, so every new joiner repeats the setup.",
+      null,
+      "It shares the server but commits a secret to the repository.",
+      "CLAUDE.md carries instructions and context. Shared server configuration lives in `.mcp.json`."
+    ]
+  },
+  {
+    "id": "q5",
+    "domain": "D3",
+    "domainName": "Claude Code Configuration and Workflows",
+    "task": "3.2",
+    "scenario": "A platform team shares a skill, `dep-audit`, that walks the dependency tree and prints about 3,000 lines of findings. Engineers run it in the middle of feature work. Afterwards Claude loses track of the feature it was building.",
+    "question": "Which change addresses the cause?",
+    "options": [
+      "Move the audit instructions into the project CLAUDE.md so they load with every session and need no skill.",
+      "Add `context: fork` to the skill's frontmatter so it runs in an isolated sub-agent context.",
+      "Set `allowed-tools` in the frontmatter so the skill is limited to read-only tools and cannot edit files.",
+      "Move the skill to `~/.claude/skills/` so each engineer runs a personal copy."
+    ],
+    "correct": 1,
+    "explanation": "The verbose output is flooding the main conversation. Forking the skill's context runs it in isolation, so the bulk of the output stays out of the session doing the feature work.",
+    "whyNot": [
+      "CLAUDE.md is for always-loaded standards; a task-specific workflow there adds context to every session and isolates nothing.",
+      null,
+      "That limits what the skill can do, not where its output lands.",
+      "That changes who has the skill, not where it runs."
+    ]
+  },
+  {
+    "id": "q6",
+    "domain": "D3",
+    "domainName": "Claude Code Configuration and Workflows",
+    "task": "3.6",
+    "scenario": "A payments startup runs Claude Code as a reviewer on every push to an open pull request. One pull request received six pushes, and the same four comments were posted after each push. Engineers have started ignoring the reviewer.",
+    "question": "What should change in the review job?",
+    "options": [
+      "Run the review only on the first push of each pull request.",
+      "After each run, delete any new comment whose text exactly matches a comment posted on an earlier push.",
+      "Add \"do not repeat yourself\" to the review criteria in CLAUDE.md.",
+      "Pass the earlier findings into each run and ask for only new or still-unresolved issues."
+    ],
+    "correct": 3,
+    "explanation": "Each CI run starts without knowledge of what earlier runs reported. Supplying the prior findings and asking only for new or unaddressed issues removes the duplicates and keeps later commits covered.",
+    "whyNot": [
+      "Problems introduced by later commits would never be reviewed.",
+      "It patches the symptom after the fact and depends on identical wording, while the run still lacks the earlier findings.",
+      "A fresh run has no record of what it said before, so there is nothing for it to avoid repeating.",
+      null
+    ]
+  },
+  {
+    "id": "q7",
+    "domain": "D4",
+    "domainName": "Prompt Engineering and Structured Output",
+    "task": "4.3",
+    "scenario": "A recruitment platform extracts candidate details from CVs through a tool with a JSON schema. `notice_period_days` is a required integer, yet only about a third of CVs state a notice period. Spot checks show the field is always filled, usually with 30.",
+    "question": "Which change best stops the invented values?",
+    "options": [
+      "Make the field optional and nullable so the model can return null when the CV does not say.",
+      "Keep the field required and add \"never guess\" to the extraction prompt.",
+      "Validate each result and retry with specific error feedback whenever the returned value is exactly 30.",
+      "Set `tool_choice` to \"any\" so the model must always call an extraction tool."
+    ],
+    "correct": 0,
+    "explanation": "A required field forces a value even when the source has none, which pushes the model to make one up. Marking it nullable gives the model an honest way to say the information is absent. Today: native structured outputs (output_config.format, strict: true) guarantee the schema, but checking the meaning is still your job.",
+    "whyNot": [
+      null,
+      "The schema still demands an integer, so the instruction and the schema pull in opposite directions.",
+      "A retry cannot recover information that is not in the document.",
+      "That guarantees a tool call, not a truthful value."
+    ]
+  },
+  {
+    "id": "q8",
+    "domain": "D4",
+    "domainName": "Prompt Engineering and Structured Output",
+    "task": "4.1",
+    "scenario": "A legal operations team uses Claude to flag risky clauses in supplier contracts. Lawyers dismiss 62% of flags as noise and have started skimming past all of them. The prompt currently says \"flag anything that might be a concern\".",
+    "question": "Which prompt change is most likely to raise precision?",
+    "options": [
+      "Add \"be conservative\" to the prompt so the model raises fewer flags on each contract.",
+      "Have the model score its confidence from 1 to 100 and hide flags under 80.",
+      "List the specific clause categories to flag and the categories to skip.",
+      "Ask the model to reread each flag in the same response and drop the ones it doubts."
+    ],
+    "correct": 2,
+    "explanation": "Precision improves when the prompt states which categories count and which do not. Vague instructions leave the boundary to the model, and a high false positive rate erodes trust in the accurate flags too.",
+    "whyNot": [
+      "A general instruction to be conservative does not tell the model which findings matter.",
+      "Filtering on self-reported confidence is not a substitute for stated criteria.",
+      null,
+      "Same-session self-review keeps the reasoning that produced the flag, and the criteria are still undefined."
+    ]
+  },
+  {
+    "id": "q9",
+    "domain": "D5",
+    "domainName": "Context Management and Reliability",
+    "task": "5.1",
+    "scenario": "A travel agency's rebooking assistant handles chats that run past 60 turns. Older turns are condensed into a summary to save tokens. After condensing, the assistant tells a traveller the change fee is \"a couple of hundred\" when the agreed figure was 184.50, and it forgets the confirmed travel date.",
+    "question": "What is the best fix?",
+    "options": [
+      "Condense more often, every 10 turns instead of 30, so each summary loses less.",
+      "Tell the summarising step to \"be more detailed\" and to keep every figure it considers important.",
+      "Stop condensing and send only the most recent 10 turns.",
+      "Pull amounts, dates and booking references into a facts block sent with every prompt, outside the summary."
+    ],
+    "correct": 3,
+    "explanation": "Summarising in stages tends to blur exact numbers and dates into vague wording. Keeping transactional facts in a separate persistent block means they never pass through the summary at all.",
+    "whyNot": [
+      "More rounds of summarising give the exact values more chances to be blurred.",
+      "A vague instruction does not guarantee that precise values survive.",
+      "Facts agreed earlier than the last 10 turns are dropped completely.",
+      null
+    ]
+  },
+  {
+    "id": "q10",
+    "domain": "D5",
+    "domainName": "Context Management and Reliability",
+    "task": "5.5",
+    "scenario": "A hospital group's procurement team extracts fields from four kinds of supplier document. Overall accuracy on a labelled set is 94.8%, and the operations lead wants to stop human review of every extraction the model marks high confidence. Two reviewers cover all four document types.",
+    "question": "What should happen before review is reduced?",
+    "options": [
+      "Go ahead, since the overall figure shows that high-confidence results can be trusted across every document type.",
+      "Break accuracy down by document type and by field, and keep sampling high-confidence results after the change.",
+      "Raise the high-confidence cut-off to 0.99, automate everything above it, and send the rest to the two reviewers.",
+      "Keep full human review of every extraction for good, whatever the accuracy data shows."
+    ],
+    "correct": 1,
+    "explanation": "One overall figure can hide a document type or field that performs badly. Checking each segment first, then sampling high-confidence output on an ongoing basis, shows where automation is safe and catches new error patterns.",
+    "whyNot": [
+      "An aggregate number can mask a weak document type or field.",
+      null,
+      "A stricter cut-off is still uncalibrated and still unchecked per segment.",
+      "It spends two reviewers on everything instead of directing them to low-confidence and ambiguous cases."
+    ]
+  }
+]

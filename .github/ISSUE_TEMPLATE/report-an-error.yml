@@ -1,0 +1,36 @@
+name: Report an error
+description: A question, answer or explanation looks wrong or out of date.
+title: "[error] q?: "
+labels: ["correction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks. Please do not paste questions from a real exam or a practice test behind a login.
+  - type: input
+    id: question
+    attributes:
+      label: Question id
+      description: q1 to q10, or the file name for a note.
+      placeholder: q4
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What looks wrong
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source link
+      description: A public documentation page that backs this up.
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: Suggested fix (optional)
+    validations:
+      required: false
